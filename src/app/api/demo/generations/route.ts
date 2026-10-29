@@ -1,5 +1,8 @@
 import { DemoProvider } from "@/server/providers";
 import { scenes } from "@/data/scenes";
+// Deliberately pinned to DemoProvider rather than getVideoProvider(): this route
+// debits nothing and has no authenticated owner, so it must stay a simulation
+// even if the real-provider flag is ever switched on.
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   if (

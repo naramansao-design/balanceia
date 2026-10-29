@@ -1,5 +1,5 @@
 import "server-only";
-import type { VideoProvider, Status } from "./providers";
+import type { VideoProvider, Status, ProviderAsset } from "./providers";
 /** Server integration boundary. Implement with verified Supabase Auth + service role.
  * reserve/refund must invoke the SQL RPCs, never compute balance in JavaScript.
  * Client input must never contain owner, price, provider params or credit delta.
@@ -30,26 +30,33 @@ export interface GenerationRepository {
     actualCostUsd: number | null,
   ): Promise<void>;
 }
+export type SubmitGenerationInput = {
+  userId: string;
+  sceneId: string;
+  characterId: string;
+  idempotencyKey: string;
+  /** Signed URLs and reference shape, resolved server-side. Absent in demo mode. */
+  asset?: ProviderAsset;
+};
 export async function submitGeneration(
   repo: GenerationRepository,
   provider: VideoProvider,
-  input: {
-    userId: string;
-    sceneId: string;
-    characterId: string;
-    idempotencyKey: string;
-  },
+  input: SubmitGenerationInput,
 ) {
   const generation = await repo.create(input);
   if (generation.existing) return generation;
   // A failed reservation has no debit; do not issue a refund in that case.
   await repo.reserve(generation.id);
+  const providerInput = {
+    sceneId: input.sceneId,
+    characterId: input.characterId,
+    asset: input.asset,
+  };
   try {
-    const estimated = await provider.estimateCost();
-    const request = await provider.submit({
-      sceneId: input.sceneId,
-      characterId: input.characterId,
-    });
+    // Estimated and actual cost are stored in separate columns; this one is
+    // only ever the estimate.
+    const estimated = await provider.estimateCost(providerInput);
+    const request = await provider.submit(providerInput);
     await repo.markSubmitted(generation.id, request.requestId, estimated);
     return generation;
   } catch {
@@ -76,7 +83,7 @@ export async function syncGeneration(
     await repo.refund(id);
   } else if (status === "completed") {
     const result = await provider.result(generation.requestId);
-    await repo.saveResult(id, result.videoPath, null);
+    await repo.saveResult(id, result.videoUrl, result.actualCostUsd);
     await repo.markStatus(id, status);
   } else await repo.markStatus(id, status);
   return status;
