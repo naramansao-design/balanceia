@@ -12,26 +12,39 @@ export type Generation = {
   status: string;
   failed: boolean;
 };
+/** Mirrors the two separate columns the database requires before a reservation:
+ * aceitou_termos_em and maior_de_idade_confirmado_em. Timestamps are taken in the
+ * browser only because this demo has no server session; the real adapter must
+ * record them server-side. */
+export type Consents = { termsAt: string | null; ageAt: string | null };
+const pendingStatus = (status: string) =>
+  status === "waiting" || status === "processing";
 function useDemoState() {
   const [session, setSession] = useState(false),
-    [terms, setTerms] = useState(false),
+    [consents, setConsents] = useState<Consents>({
+      termsAt: null,
+      ageAt: null,
+    }),
     [cast, setCast] = useState<Character[]>([]),
     [generations, setGenerations] = useState<Generation[]>([]);
   const urls = useRef<string[]>([]);
+  const latest = useRef<Generation[]>([]);
   useEffect(() => {
-    if (
-      !generations.some(
-        (g) => g.status === "waiting" || g.status === "processing",
-      )
-    )
-      return;
+    latest.current = generations;
+  }, [generations]);
+  // Keyed on whether anything is pending, so the interval is not torn down and
+  // recreated on every status update.
+  const polling = generations.some((g) => pendingStatus(g.status));
+  useEffect(() => {
+    if (!polling) return;
     let cancelled = false;
     const timer = setInterval(async () => {
-      try {
-        const updates = await Promise.all(
-          generations
-            .filter((g) => g.status === "waiting" || g.status === "processing")
-            .map(async (g) => {
+      const updates = await Promise.all(
+        latest.current
+          .filter((g) => pendingStatus(g.status))
+          .map(async (g) => {
+            // A failed poll fails only its own generation, never the whole list.
+            try {
               const response = await fetch(
                 "/api/demo/generations?id=" + encodeURIComponent(g.id),
               );
@@ -40,48 +53,46 @@ function useDemoState() {
                 id: g.id,
                 status: (await response.json()).status as string,
               };
-            }),
-        );
-        if (!cancelled)
-          setGenerations((prev) =>
-            prev.map((g) => {
-              const update = updates.find((u) => u.id === g.id);
-              return update
-                ? {
-                    ...g,
-                    status:
-                      update.status === "completed" && g.failed
-                        ? "failed"
-                        : update.status,
-                  }
-                : g;
-            }),
-          );
-      } catch {
-        if (!cancelled)
-          setGenerations((prev) =>
-            prev.map((g) =>
-              g.status === "waiting" || g.status === "processing"
-                ? { ...g, status: "failed" }
-                : g,
-            ),
-          );
-      }
+            } catch {
+              return { id: g.id, status: "failed" };
+            }
+          }),
+      );
+      if (cancelled) return;
+      setGenerations((prev) =>
+        prev.map((g) => {
+          const update = updates.find((u) => u.id === g.id);
+          if (!update) return g;
+          return {
+            ...g,
+            status:
+              update.status === "completed" && g.failed
+                ? "failed"
+                : update.status,
+          };
+        }),
+      );
     }, 1000);
     return () => {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [generations]);
+  }, [polling]);
   useEffect(() => {
     const current = urls.current;
     return () => current.forEach(URL.revokeObjectURL);
   }, []);
+  function recordConsent(key: keyof Consents, checked: boolean) {
+    setConsents((prev) => ({
+      ...prev,
+      [key]: checked ? new Date().toISOString() : null,
+    }));
+  }
   return {
     session,
     setSession,
-    terms,
-    setTerms,
+    consents,
+    recordConsent,
     cast,
     setCast,
     generations,

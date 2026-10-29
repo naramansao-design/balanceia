@@ -16,8 +16,8 @@ export function Studio({
   const {
     session,
     setSession,
-    terms,
-    setTerms,
+    consents,
+    recordConsent,
     cast,
     setCast,
     generations,
@@ -36,7 +36,8 @@ export function Studio({
     [selected, setSelected] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [fail, setFail] = useState(false);
+    [fail, setFail] = useState(false),
+    [checking, setChecking] = useState(false);
   const active = useRef(true);
   useEffect(() => {
     active.current = true;
@@ -45,9 +46,49 @@ export function Studio({
     };
   }, []);
   const s = scenes.find((s) => s.slug === scene)!;
+  const accepted = Boolean(consents.termsAt && consents.ageAt);
+  const character = cast.find((c) => c.id === selected);
+  // A stored character carries its own authorization timestamp; the checkbox
+  // below applies to a photo chosen right now.
+  const authorized = character ? true : Boolean(photo && consent);
+  const stamp = (iso: string | null) =>
+    iso ? t.consentRecorded + " " + new Date(iso).toLocaleString("pt-BR") : "";
+  const consentChecks = (
+    <>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={Boolean(consents.ageAt)}
+          onChange={(e) => recordConsent("ageAt", e.target.checked)}
+        />
+        {t.age}
+      </label>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={Boolean(consents.termsAt)}
+          onChange={(e) => recordConsent("termsAt", e.target.checked)}
+        />
+        {t.terms}
+      </label>
+      <p className="muted">
+        {accepted
+          ? stamp(consents.ageAt) + " · " + stamp(consents.termsAt)
+          : t.consentMissing}
+      </p>
+    </>
+  );
   async function upload(file?: File) {
     setError("");
     if (!file) return;
+    setChecking(true);
+    try {
+      await inspect(file);
+    } finally {
+      setChecking(false);
+    }
+  }
+  async function inspect(file: File) {
     if (
       !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
       file.size > 8 * 1024 * 1024
@@ -74,7 +115,14 @@ export function Studio({
     try {
       const img = new window.Image();
       img.src = url;
-      await img.decode();
+      // decode() can hang indefinitely when the page is not being rendered.
+      // Without this bound the picker would silently do nothing at all.
+      await Promise.race([
+        img.decode(),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("decode timeout")), 10000),
+        ),
+      ]);
     } catch {
       URL.revokeObjectURL(url);
       setError(t.photoRequired);
@@ -101,6 +149,10 @@ export function Studio({
     setError("");
   }
   async function generate() {
+    if (!accepted || !authorized) {
+      setError(t.photoRequired);
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -125,18 +177,11 @@ export function Studio({
     <div className="panel">
       <h2>{t.steps[1]}</h2>
       <p>{t.loginHint}</p>
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={terms}
-          onChange={(e) => setTerms(e.target.checked)}
-        />
-        {t.terms}
-      </label>
+      {consentChecks}
       <p className="muted">{t.termsInfo}</p>
       <button
         className="primary"
-        disabled={!terms}
+        disabled={!accepted}
         onClick={() => setSession(true)}
       >
         {t.login}
@@ -152,9 +197,13 @@ export function Studio({
           aria-label={t.upload}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => void upload(e.target.files?.[0])}
+          disabled={checking}
+          onChange={(e) =>
+            upload(e.target.files?.[0]).catch(() => setError(t.photoRequired))
+          }
         />
       </label>
+      {checking && <p aria-live="polite">{t.photoChecking}</p>}
       {photo && (
         <div
           className="photo-preview"
@@ -163,14 +212,21 @@ export function Studio({
           aria-label={t.selectedPhoto}
         />
       )}
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
-        />
-        {t.consent}
-      </label>
+      {character ? (
+        <p>
+          {t.temporaryConsent}{" "}
+          {new Date(character.consentAt).toLocaleString("pt-BR")}
+        </p>
+      ) : (
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+          />
+          {t.consent}
+        </label>
+      )}
       <p className="muted">{t.privacy}</p>
     </>
   );
@@ -207,14 +263,7 @@ export function Studio({
           <p>{t.balance}</p>
           <p>{t.ledger}</p>
           <button disabled>{t.disabled}</button>
-          <label className="check">
-            <input
-              type="checkbox"
-              checked={terms}
-              onChange={(e) => setTerms(e.target.checked)}
-            />
-            {t.terms}
-          </label>
+          {consentChecks}
           <small>{t.termsInfo}</small>
         </div>
       </section>
@@ -335,7 +384,7 @@ export function Studio({
                       const c = cast.find((c) => c.id === e.target.value);
                       if (c) {
                         setPhoto(c.url);
-                        setConsent(true);
+                        setConsent(false);
                       }
                     }}
                   >
@@ -363,7 +412,7 @@ export function Studio({
                 </button>
                 <button
                   className="primary"
-                  disabled={!photo || !consent}
+                  disabled={!authorized}
                   onClick={() => setStep(3)}
                 >
                   {t.next} →

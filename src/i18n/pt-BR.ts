@@ -19,8 +19,10 @@ export const ptBR = {
   login: "Experimentar sessão de demonstração",
   loginHint:
     "Na versão conectada, o login será exigido aqui. Esta sessão é temporária e não autentica uma conta.",
-  terms:
-    "Confirmo que tenho 18 anos ou mais e aceito os termos de demonstração.",
+  age: "Confirmo que tenho 18 anos ou mais.",
+  terms: "Aceito os termos de demonstração.",
+  consentRecorded: "Registrado em",
+  consentMissing: "Nenhuma confirmação registrada nesta sessão.",
   emptyCast: "Seu próximo personagem começa aqui.",
   emptyCreations: "Sua primeira cena está esperando.",
   disabled: "Em breve",
@@ -48,6 +50,7 @@ export const ptBR = {
   scene: "Cena",
   examplePrice: "Preço de exemplo",
   photoRequired: "Escolha uma foto válida e confirme a autorização.",
+  photoChecking: "Verificando a foto…",
   sessionRequired: "Inicie a sessão de demonstração para continuar.",
   noCast: "Nenhum personagem nesta sessão.",
   profile: "Perfil de demonstração",
