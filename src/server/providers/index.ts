@@ -1,2 +1,45 @@
-import 'server-only'; export type Status='waiting'|'processing'|'completed'|'failed'; export interface VideoProvider {submit(input:{sceneId:string;characterId:string}):Promise<{requestId:string}>;status(requestId:string):Promise<Status>;result(requestId:string):Promise<{videoPath:null;demo:true}>;estimateCost():Promise<number|null>;} export class DemoProvider implements VideoProvider {async submit(){return {requestId:Date.now()+':'+crypto.randomUUID()};}async status(id:string):Promise<Status>{const elapsed=Date.now()-Number(id.split(':')[0]);return elapsed<1500?'waiting':elapsed<4000?'processing':'completed';}async result(){return {videoPath:null,demo:true as const};}async estimateCost(){return null;}} export class WanAnimateReplaceProvider implements VideoProvider { // TODO: integrate documented fal-ai/wan/v2.2-14b/animate/replace after separate authorization and provider contract validation.
-async submit():Promise<never>{throw new Error('Provider not integrated');}async status():Promise<never>{throw new Error('Provider not integrated');}async result():Promise<never>{throw new Error('Provider not integrated');}async estimateCost(){return null;}}
+import "server-only";
+export type Status = "waiting" | "processing" | "completed" | "failed";
+export interface VideoProvider {
+  submit(input: {
+    sceneId: string;
+    characterId: string;
+  }): Promise<{ requestId: string }>;
+  status(requestId: string): Promise<Status>;
+  result(requestId: string): Promise<{ videoPath: null; demo: true }>;
+  estimateCost(): Promise<number | null>;
+}
+export class DemoProvider implements VideoProvider {
+  async submit() {
+    return { requestId: Date.now() + ":" + crypto.randomUUID() };
+  }
+  async status(id: string): Promise<Status> {
+    const elapsed = Date.now() - Number(id.split(":")[0]);
+    return elapsed < 1500
+      ? "waiting"
+      : elapsed < 4000
+        ? "processing"
+        : "completed";
+  }
+  async result() {
+    return { videoPath: null, demo: true as const };
+  }
+  async estimateCost() {
+    return null;
+  }
+}
+export class WanAnimateReplaceProvider implements VideoProvider {
+  // TODO: integrate documented fal-ai/wan/v2.2-14b/animate/replace after separate authorization and provider contract validation.
+  async submit(): Promise<never> {
+    throw new Error("Provider not integrated");
+  }
+  async status(): Promise<never> {
+    throw new Error("Provider not integrated");
+  }
+  async result(): Promise<never> {
+    throw new Error("Provider not integrated");
+  }
+  async estimateCost() {
+    return null;
+  }
+}

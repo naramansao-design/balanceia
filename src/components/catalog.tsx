@@ -1,1 +1,51 @@
-'use client'; import {useState} from 'react'; import Link from 'next/link'; import {scenes} from '@/data/scenes'; import {t} from '@/i18n'; import {Art} from './art'; export function Catalog(){const [category,setCategory]=useState<string>('Em alta');return <section id="cenas"><div className="section-heading"><div><span className="eyebrow">ESCOLHA SEU UNIVERSO</span><h2>Qual é a sua próxima cena?</h2></div><span className="catalog-count">06 cenas · infinitas ideias</span></div><div className="tabs" aria-label="Categorias">{[...t.categories,t.all].map(c=><button key={c} aria-pressed={c===category} onClick={()=>setCategory(c)}>{c}</button>)}</div><div className="grid">{scenes.filter(s=>category===t.all||s.category===category).map(s=><Link className="scene-card" href={'/cena/'+s.slug} key={s.slug}><Art index={s.art}/><div className="card-body"><span className="eyebrow">{s.category}</span><h3>{s.title}<span>↗</span></h3><p>{s.duration}s <span>·</span> {s.credits} {t.credits} <small>({t.example.toLowerCase()})</small></p></div></Link>)}</div></section>}
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import { scenes } from "@/data/scenes";
+import { t } from "@/i18n";
+import { Art } from "./art";
+export function Catalog() {
+  const [category, setCategory] = useState<string>("Em alta");
+  return (
+    <section id="cenas">
+      <div className="section-heading">
+        <div>
+          <span className="eyebrow">{t.pickUniverse}</span>
+          <h2>{t.nextScene}</h2>
+        </div>
+        <span className="catalog-count">{t.catalogCount}</span>
+      </div>
+      <div className="tabs" aria-label={t.scene}>
+        {[...t.categories, t.all].map((c) => (
+          <button
+            key={c}
+            aria-pressed={c === category}
+            onClick={() => setCategory(c)}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
+      <div className="grid">
+        {scenes
+          .filter((s) => category === t.all || s.category === category)
+          .map((s) => (
+            <Link className="scene-card" href={"/cena/" + s.slug} key={s.slug}>
+              <Art index={s.art} />
+              <div className="card-body">
+                <span className="eyebrow">{s.category}</span>
+                <h3>
+                  {s.title}
+                  <span>↗</span>
+                </h3>
+                <p>
+                  {s.duration}s <span>·</span> {s.credits} {t.credits}{" "}
+                  <small>({t.example.toLowerCase()})</small>
+                </p>
+              </div>
+            </Link>
+          ))}
+      </div>
+    </section>
+  );
+}

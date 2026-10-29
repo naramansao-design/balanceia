@@ -1,1 +1,32 @@
-import {DemoProvider} from '@/server/providers';import {scenes} from '@/data/scenes';export async function POST(request:Request){const body=await request.json().catch(()=>null);if(!body||!scenes.some(s=>s.slug===body.sceneId)||body.consent!==true)return Response.json({error:'Entrada inválida'},{status:400});const provider=new DemoProvider();const result=await provider.submit();return Response.json({...result,demo:true,estimatedCostUsd:await provider.estimateCost(),actualCostUsd:null},{headers:{'Cache-Control':'no-store'}});}export async function GET(request:Request){const id=new URL(request.url).searchParams.get('id');if(!id||!/^\d{13}:[0-9a-f-]{36}$/.test(id))return Response.json({error:'ID inválido'},{status:400});const p=new DemoProvider();return Response.json({status:await p.status(id),...await p.result()},{headers:{'Cache-Control':'no-store'}});}
+import { DemoProvider } from "@/server/providers";
+import { scenes } from "@/data/scenes";
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => null);
+  if (
+    !body ||
+    !scenes.some((s) => s.slug === body.sceneId) ||
+    body.consent !== true
+  )
+    return Response.json({ error: "Entrada inválida" }, { status: 400 });
+  const provider = new DemoProvider();
+  const result = await provider.submit();
+  return Response.json(
+    {
+      ...result,
+      demo: true,
+      estimatedCostUsd: await provider.estimateCost(),
+      actualCostUsd: null,
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+}
+export async function GET(request: Request) {
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id || !/^\d{13}:[0-9a-f-]{36}$/.test(id))
+    return Response.json({ error: "ID inválido" }, { status: 400 });
+  const p = new DemoProvider();
+  return Response.json(
+    { status: await p.status(id), ...(await p.result()) },
+    { headers: { "Cache-Control": "no-store" } },
+  );
+}

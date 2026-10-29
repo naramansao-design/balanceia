@@ -1,1 +1,56 @@
-import {notFound} from 'next/navigation';import Link from 'next/link';import {scenes} from '@/data/scenes';import {Art} from '@/components/art';import {t} from '@/i18n';import {brand} from '@/config/brand';export function generateStaticParams(){return scenes.map(s=>({slug:s.slug}));}export async function generateMetadata({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const s=scenes.find(s=>s.slug===slug);return {title:s?s.title+' | '+brand.name:brand.name};}export default async function ScenePage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const s=scenes.find(s=>s.slug===slug);if(!s)notFound();return <section className="detail"><div><Art index={s.art} hero/><p className="muted">{t.preview}</p></div><div><Link href="/">← {t.back}</Link><p className="eyebrow">{s.category} · {t.example}</p><h1>{s.title}</h1><p>{s.description}</p><div className="specs"><span>{s.duration} {t.duration}</span><span>{s.credits} {t.credits}<small>{t.examplePrice}</small></span></div><Link className="primary" href={'/criar?cena='+s.slug}>{t.create} ↗</Link><p className="muted">{t.privacy}</p></div></section>}
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { scenes } from "@/data/scenes";
+import { Art } from "@/components/art";
+import { t } from "@/i18n";
+import { brand } from "@/config/brand";
+export function generateStaticParams() {
+  return scenes.map((s) => ({ slug: s.slug }));
+}
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const s = scenes.find((s) => s.slug === slug);
+  return { title: s ? s.title + " | " + brand.name : brand.name };
+}
+export default async function ScenePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const s = scenes.find((s) => s.slug === slug);
+  if (!s) notFound();
+  return (
+    <section className="detail">
+      <div>
+        <Art index={s.art} hero />
+        <p className="muted">{t.preview}</p>
+      </div>
+      <div>
+        <Link href="/">← {t.back}</Link>
+        <p className="eyebrow">
+          {s.category} · {t.example}
+        </p>
+        <h1>{s.title}</h1>
+        <p>{s.description}</p>
+        <div className="specs">
+          <span>
+            {s.duration} {t.duration}
+          </span>
+          <span>
+            {s.credits} {t.credits}
+            <small>{t.examplePrice}</small>
+          </span>
+        </div>
+        <Link className="primary" href={"/criar?cena=" + s.slug}>
+          {t.create} ↗
+        </Link>
+        <p className="muted">{t.privacy}</p>
+      </div>
+    </section>
+  );
+}

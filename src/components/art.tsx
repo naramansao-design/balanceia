@@ -1,1 +1,26 @@
-import Image from 'next/image'; import {t} from '@/i18n'; export function Art({index,hero=false}:{index:number;hero?:boolean}){return <div className={'art art-'+index+(hero?' art-hero':'')}><Image src={'/scenes/scene-'+index+'.svg'} alt="" fill sizes={hero?'(max-width: 760px) 100vw, 55vw':'(max-width: 600px) 100vw, 33vw'} priority={hero}/><span className="example">{t.example}</span></div>}
+import Image from "next/image";
+import { t } from "@/i18n";
+export function Art({
+  index,
+  hero = false,
+}: {
+  index: number;
+  hero?: boolean;
+}) {
+  return (
+    <div className={"art art-" + index + (hero ? " art-hero" : "")}>
+      <Image
+        src={"/scenes/scene-" + index + ".svg"}
+        alt=""
+        fill
+        sizes={
+          hero
+            ? "(max-width: 760px) 100vw, 55vw"
+            : "(max-width: 600px) 100vw, 33vw"
+        }
+        priority={hero}
+      />
+      <span className="example">{t.example}</span>
+    </div>
+  );
+}
