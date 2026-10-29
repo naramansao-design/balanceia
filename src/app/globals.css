@@ -223,9 +223,9 @@ p {
   padding: 14px 23px;
   background: linear-gradient(
     110deg,
-    var(--pink),
-    var(--purple) 65%,
-    var(--orange)
+    color-mix(in srgb, var(--pink) 65%, var(--bg)),
+    color-mix(in srgb, var(--purple) 65%, var(--bg)) 65%,
+    color-mix(in srgb, var(--orange) 65%, var(--bg))
   );
   border: 0;
   border-radius: 9px;
@@ -235,7 +235,7 @@ p {
   min-height: 49px;
 }
 .primary:hover {
-  filter: brightness(1.1);
+  box-shadow: 0 0 0 2px var(--muted);
 }
 .hero-note {
   font-size: 10px;

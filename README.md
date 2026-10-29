@@ -54,3 +54,15 @@ Antes da integração real: aplicar migrations em ambiente separado; testar RLS,
 5. Tradução en (tipo de locale reservado; pt-BR implementado).
 
 Referências consultadas: [Next.js](https://nextjs.org/docs/app/getting-started/installation), [Supabase Functions](https://supabase.com/docs/guides/database/functions), [Storage RLS](https://supabase.com/docs/guides/storage/security/access-control).
+
+## Validação realizada — 29/10/2026
+
+- TypeScript, ESLint e build de produção aprovados. Webpack usado porque o Turbopack falhou ao iniciar processo auxiliar no ambiente restrito. O build final exigiu permissão de escrita dos artefatos `.next` fora do sandbox.
+- Navegação testada em desktop e viewport 390 × 844: catálogo e filtro Humor, detalhe compartilhável, bloqueio no passo 2, imagem PNG sintética, autorização, criação/seleção/exclusão de personagem, revisão e processamento.
+- Observados Aguardando, Processando, Concluído e Falhou; acompanhamento continua ao navegar para Minhas Criações. Conclusão sem vídeo informa download indisponível. Conta informa ausência de saldo real e compra desativada.
+- Todas as seis rotas principais responderam HTTP 200; API rejeitou cena inexistente e ausência de autorização com HTTP 400.
+- Revisão básica: labels, foco visível, link de pular navegação, hierarquia de títulos, reduced motion e contraste. Gradiente do CTA ajustado para contraste mínimo de 4,56:1 com texto branco nos extremos da paleta.
+- Migrations não aplicadas nem testadas em PostgreSQL/Supabase; nenhuma garantia de segurança de produção é inferida dos testes de UI.
+- Fixture `tests/fixtures/sample.png` é um pixel sintético usado apenas no teste local; não contém foto de pessoa.
+
+Preview desta sessão: http://127.0.0.1:3018 (porta alternativa porque 3000 já estava ocupada).

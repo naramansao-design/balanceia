@@ -179,7 +179,7 @@ export function Studio({
       {generations.map((g) => (
         <article className="panel" key={g.id}>
           <span className="eyebrow">{t.simulated}</span>
-          <h3>{g.title}</h3>
+          <h2>{g.title}</h2>
           <p>
             {g.status === "waiting"
               ? t.pending
